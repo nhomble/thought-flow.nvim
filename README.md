@@ -9,7 +9,7 @@ draught down some notes (with context) that don't belong as actual `TODOs` in yo
 ```lua
 {
   "nhomble/thought-flow.nvim"
-},
+}
 ```
 
 ## API
