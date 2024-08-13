@@ -23,4 +23,4 @@ require("thought-flow").review()
 ### Menu Actions
 
 - `<CR>` to open file/line number where thought was captured
-- `D` to demove the thought
+- `D` to remove the thought
