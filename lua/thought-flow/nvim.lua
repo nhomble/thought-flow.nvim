@@ -1,5 +1,18 @@
 local M = {}
 
+M.go_to_line = function(line_number)
+	-- Get the total number of lines in the current buffer
+	local total_lines = vim.api.nvim_buf_line_count(0)
+
+	-- Ensure the line number is within the buffer's range
+	if line_number > total_lines then
+		line_number = total_lines
+	end
+
+	-- Move the cursor to the specified line number
+	vim.api.nvim_win_set_cursor(0, { line_number, 0 })
+end
+
 M.open_file_at_line = function(filename, line_number)
 	-- Check if the line number is valid
 	if line_number < 1 then
@@ -17,7 +30,7 @@ M.open_file_at_line = function(filename, line_number)
 	-- Switch to the buffer
 	vim.api.nvim_set_current_buf(buf)
 
-	vim.api.nvim_win_set_cursor(0, { line_number, 0 })
+	M.go_to_line(line_number)
 end
 
 M.find_existing_buffer = function(filename)
