@@ -3,7 +3,7 @@ local __DEFAULT_OPTIONS = {
 	ui = {
 		prompt = "> ",
 	},
-	-- in case users want to swap our the internal deser
+	-- in case users want to swap out the internal deser
 	json = {
 		decode = function(s)
 			return vim.json.decode(s)
