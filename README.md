@@ -2,6 +2,16 @@
 
 draught down some notes (with context) that don't belong as actual `TODOs` in your VCS.
 
+## Installation
+
+[lazy](https://github.com/folke/lazy.nvim)
+
+```lua
+{
+  "nhomble/thought-flow.nvim"
+},
+```
+
 ## API
 
 **capture**
