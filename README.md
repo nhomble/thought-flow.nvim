@@ -34,3 +34,7 @@ require("thought-flow").review()
 
 - `<CR>` to open file/line number where thought was captured
 - `D` to remove the thought
+
+## Configuration
+
+The options are available in [config.lua](./lua/thought-flow/config.lua). You can override the configuration there with `require("thought-flow").setup({})`.
