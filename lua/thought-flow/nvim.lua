@@ -1,4 +1,8 @@
 local M = {}
+local function file_exists(filepath)
+	local stat = vim.loop.fs_stat(filepath)
+	return stat and stat.type == "file"
+end
 
 M.go_to_line = function(line_number)
 	-- Get the total number of lines in the current buffer
@@ -14,9 +18,15 @@ M.go_to_line = function(line_number)
 end
 
 M.open_file_at_line = function(filename, line_number)
+	local notifications = require("thought-flow.config").options.notifications
 	-- Check if the line number is valid
 	if line_number < 1 then
-		print("Invalid line number")
+		notifications.error("Line number is less than 0: " .. line_number)
+		return
+	end
+
+	if not file_exists(filename) then
+		notifications.error("Unknown file: [" .. filename .. "]")
 		return
 	end
 

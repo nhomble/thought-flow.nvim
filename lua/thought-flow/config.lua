@@ -3,6 +3,12 @@ local __DEFAULT_OPTIONS = {
 	ui = {
 		prompt = "> ",
 	},
+	-- swap with your choice of notification channel
+	notifications = {
+		error = function(msg)
+			print("[ERROR] [thought-flow] " .. msg)
+		end,
+	},
 	-- in case users want to swap out the internal deser
 	json = {
 		decode = function(s)
@@ -18,6 +24,6 @@ local M = {}
 
 M.options = __DEFAULT_OPTIONS
 M.configure = function(user_options)
-	vim.tbl_deep_extend("keep", user_options or {}, __DEFAULT_OPTIONS)
+	M.options = vim.tbl_deep_extend("keep", user_options or {}, __DEFAULT_OPTIONS)
 end
 return M
