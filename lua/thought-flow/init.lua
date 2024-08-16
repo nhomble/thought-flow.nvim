@@ -2,6 +2,11 @@ local M = {}
 
 M.init = function()
 	require("thought-flow.repo").init()
+	local nvim = require("thought-flow.nvim")
+	nvim.init()
+	nvim.register_autocmd(function()
+		M.annotate_buffer()
+	end)
 end
 
 M.setup = function(options)
@@ -11,6 +16,20 @@ end
 M.clear = function()
 	local repo = require("thought-flow.repo")
 	repo.clear()
+end
+
+M.annotate_buffer = function(bufnr)
+	if bufnr == nil then
+		bufnr = vim.api.nvim_get_current_buf()
+	end
+	local repo = require("thought-flow.repo")
+	local nvim = require("thought-flow.nvim")
+	local thought_file = vim.api.nvim_buf_get_name(bufnr)
+	local file_thoughts = repo.find_thoughts_for_file(thought_file)
+	nvim.clear_annotations(bufnr)
+	for _key, value in pairs(file_thoughts) do
+		nvim.annotate(bufnr, value.line_number)
+	end
 end
 
 M.capture = function()
@@ -46,6 +65,7 @@ M.capture = function()
 				file = thought_file,
 				timestamp = thought_now,
 			})
+			M.annotate_buffer()
 		end,
 	})
 
@@ -70,6 +90,7 @@ M.review = function()
 	local repo = require("thought-flow.repo")
 	local nvim = require("thought-flow.nvim")
 
+	local bufnr = vim.api.nvim_get_current_buf()
 	local json = repo.get_all()
 	local lines = {}
 	for key in pairs(json) do
@@ -107,6 +128,7 @@ M.review = function()
 		},
 		on_delete = function(item)
 			repo.remove(item.text)
+			M.annotate_buffer(bufnr)
 		end,
 		on_submit = function(item)
 			if item == nil then
@@ -114,7 +136,6 @@ M.review = function()
 			end
 			local file = item["thought_flow"].file
 			local ln = item["thought_flow"].line_number
-			print("" .. file .. " " .. ln)
 			nvim.open_file_at_line(file, ln)
 		end,
 	})

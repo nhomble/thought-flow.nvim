@@ -30,7 +30,7 @@ local read = function()
 	end
 
 	local content = file:read("*a") -- Read the entire file
-	file:close()                   -- Close the file
+	file:close() -- Close the file
 	state = config.options.json.decode(content)
 
 	return state
@@ -63,6 +63,16 @@ end
 M.clear = function()
 	state = {}
 	write()
+end
+
+M.find_thoughts_for_file = function(file)
+	local result = {}
+	for key, value in pairs(state) do
+		if value.file == file then
+			result[key] = value
+		end
+	end
+	return result
 end
 
 return M

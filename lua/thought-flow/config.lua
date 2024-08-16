@@ -9,6 +9,11 @@ local __DEFAULT_OPTIONS = {
 			print("[ERROR] [thought-flow] " .. msg)
 		end,
 	},
+	annotations = {
+		text = "💭",
+		namespace = "thought-flow-namespace",
+		color = "#00bfff"
+	},
 	-- in case users want to swap out the internal deser
 	json = {
 		decode = function(s)
@@ -17,6 +22,10 @@ local __DEFAULT_OPTIONS = {
 		encode = function(o)
 			return vim.json.encode(o)
 		end,
+	},
+	autocmd = {
+		group = "thought-flow",
+		pattern = "*",
 	},
 }
 
