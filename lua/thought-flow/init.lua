@@ -104,6 +104,7 @@ M.review = function()
 			repo.remove(item.text)
 		end,
 		on_submit = function(item)
+			if item == nil then return end
 			local file = item["thought_flow"].file
 			local ln = item["thought_flow"].line_number
 			print("" .. file .. " " .. ln)
