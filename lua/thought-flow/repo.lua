@@ -14,7 +14,7 @@ end
 local write = function()
 	local file, err = io.open(config.options.path, "w")
 	if file then
-	  local json = config.options.json.encode(state)
+		local json = config.options.json.encode(state)
 		file:write(json)
 		file:close()
 	else
@@ -30,7 +30,7 @@ local read = function()
 	end
 
 	local content = file:read("*a") -- Read the entire file
-	file:close() -- Close the file
+	file:close()                   -- Close the file
 	state = config.options.json.decode(content)
 
 	return state
@@ -47,7 +47,7 @@ M.init = function()
 end
 
 M.get_all = function()
-  return state
+	return state
 end
 
 M.add = function(thought, data)
@@ -57,6 +57,11 @@ end
 
 M.remove = function(thought)
 	state[thought] = nil
+	write()
+end
+
+M.clear = function()
+	state = {}
 	write()
 end
 

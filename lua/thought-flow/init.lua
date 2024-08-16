@@ -8,6 +8,11 @@ M.setup = function(options)
 	require("thought-flow.config").configure(options)
 end
 
+M.clear = function()
+	local repo = require("thought-flow.repo")
+	repo.clear()
+end
+
 M.capture = function()
 	local config = require("thought-flow.config")
 	local Input = require("nui.input")
@@ -104,7 +109,9 @@ M.review = function()
 			repo.remove(item.text)
 		end,
 		on_submit = function(item)
-			if item == nil then return end
+			if item == nil then
+				return
+			end
 			local file = item["thought_flow"].file
 			local ln = item["thought_flow"].line_number
 			print("" .. file .. " " .. ln)
