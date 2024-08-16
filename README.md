@@ -30,6 +30,14 @@ review your thoughts
 require("thought-flow").review()
 ```
 
+**clear**
+
+clear your thoughts
+
+```lua
+require("thought-flow").clear()
+```
+
 ### Menu Actions
 
 - `<CR>` to open file/line number where thought was captured
