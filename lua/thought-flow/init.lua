@@ -130,6 +130,9 @@ M.review = function()
 			submit = { "<CR>", "<Space>" },
 		},
 		on_delete = function(item)
+			if item == nil then
+				return
+			end
 			repo.remove(item.text)
 			M.annotate_buffer(bufnr)
 		end,
