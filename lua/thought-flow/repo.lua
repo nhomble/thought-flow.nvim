@@ -1,3 +1,4 @@
+local version = "v1"
 local state = {}
 local config = require("thought-flow.config")
 
@@ -13,8 +14,12 @@ end
 
 local write = function()
 	local file, err = io.open(config.options.path, "w")
+	local toWrite = {
+		version = version,
+		state = state
+	}
 	if file then
-		local json = config.options.json.encode(state)
+		local json = config.options.json.encode(toWrite)
 		file:write(json)
 		file:close()
 	else
@@ -31,7 +36,10 @@ local read = function()
 
 	local content = file:read("*a") -- Read the entire file
 	file:close() -- Close the file
-	state = config.options.json.decode(content)
+	local full = config.options.json.decode(content)
+	if not full == nil and not full.state == nil then
+		state = full.state
+	end
 
 	return state
 end
