@@ -40,6 +40,7 @@ M.capture = function()
 
 	local thought_line_number = vim.api.nvim_win_get_cursor(0)[1]
 	local thought_file = vim.api.nvim_buf_get_name(0)
+	local thought_line_content = vim.api.nvim_buf_get_lines(0, thought_line_number - 1, thought_line_number, false)[1]
 	local thought_now = os.date()
 	local input = Input({
 		position = "50%",
@@ -63,6 +64,7 @@ M.capture = function()
 			repo.add(value, {
 				line_number = thought_line_number,
 				file = thought_file,
+				content = thought_line_content,
 				timestamp = thought_now,
 			})
 			M.annotate_buffer()
