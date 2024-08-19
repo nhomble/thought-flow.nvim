@@ -16,6 +16,7 @@ end
 M.clear = function()
 	local repo = require("thought-flow.repo")
 	repo.clear()
+	M.annotate_buffer()
 end
 
 M.annotate_buffer = function(bufnr)
