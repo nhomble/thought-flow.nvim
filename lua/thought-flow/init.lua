@@ -158,5 +158,14 @@ M.review = function()
 	end, { once = true })
 end
 
+M.remove_line = function()
+	local repo = require("thought-flow.repo")
+
+	local thought_line_number = vim.api.nvim_win_get_cursor(0)[1]
+	local thought_file = vim.api.nvim_buf_get_name(0)
+	repo.remove_thought(thought_file, thought_line_number)
+	M.annotate_buffer()
+end
+
 M.init()
 return M

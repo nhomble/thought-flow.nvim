@@ -16,7 +16,7 @@ local write = function()
 	local file, err = io.open(config.options.path, "w")
 	local toWrite = {
 		version = version,
-		state = state
+		state = state,
 	}
 	if file then
 		local json = config.options.json.encode(toWrite)
@@ -81,6 +81,17 @@ M.find_thoughts_for_file = function(file)
 		end
 	end
 	return result
+end
+
+M.remove_thought = function(file, line_number)
+	-- remove from table
+	for k, data in pairs(state) do
+		if data.file == file and data.line_number == line_number then
+			state[k] = nil
+			break
+		end
+	end
+	write()
 end
 
 return M
