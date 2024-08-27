@@ -37,7 +37,7 @@ local read = function()
 	local content = file:read("*a") -- Read the entire file
 	file:close() -- Close the file
 	local full = config.options.json.decode(content)
-	if not full == nil and not full.state == nil then
+	if full ~= nil and full.state ~= nil then
 		state = full.state
 	end
 
