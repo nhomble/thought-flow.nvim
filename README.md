@@ -50,7 +50,8 @@ vim.keymap.set('n', '<leader>tD', ':ThoughtFlowClear<CR>', { desc = "Clear all t
 ```
 
 **Menu Actions (in Review mode):**
-- `<CR>` or `<Space>` - Open file/line number where thought was captured
+- `<Space>` - Show full thought text in popup (supports visual mode, yank, search)
+- `<CR>` - Navigate to file/line number where thought was captured
 - `D` - Delete the selected thought
 - `j`/`k` or arrow keys - Navigate thoughts
 - `/` - Search forward through thoughts
@@ -58,6 +59,8 @@ vim.keymap.set('n', '<leader>tD', ':ThoughtFlowClear<CR>', { desc = "Clear all t
 - `n` - Jump to next search match
 - `N` - Jump to previous search match
 - `<Esc>` or `<C-c>` - Close menu
+
+Long thoughts are automatically truncated with "..." in the menu list.
 
 ## API
 

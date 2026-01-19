@@ -122,16 +122,30 @@ end
 
 M.review = function()
 	local Menu = require("thought-flow.nui-menu-extended")
+	local Popup = require("nui.popup")
 	local event = require("nui.utils.autocmd").event
 	local repo = require("thought-flow.repo")
 	local nvim = require("thought-flow.nvim")
+	local config = require("thought-flow.config")
 
 	local bufnr = vim.api.nvim_get_current_buf()
 	local json = repo.get_all()
 	local lines = {}
+
+	-- Helper to truncate text
+	local function truncate_text(text, max_width)
+		max_width = max_width or 50  -- Default if not configured
+		if #text <= max_width then
+			return text
+		end
+		return text:sub(1, max_width - 3) .. "..."
+	end
+
 	for key in pairs(json) do
-		local item = Menu.item(key, {
+		local display_text = truncate_text(key, config.options.ui.max_thought_display_width)
+		local item = Menu.item(display_text, {
 			thought_flow = json[key],
+			original_text = key,
 		})
 		table.insert(lines, item)
 	end
@@ -179,6 +193,82 @@ M.review = function()
 		end,
 	})
 	menu:mount()
+
+	-- Add Space to show full thought text
+	vim.api.nvim_buf_set_keymap(menu.bufnr, "n", "<Space>", "", {
+		noremap = true,
+		nowait = true,
+		callback = function()
+			local item = menu.tree:get_node()
+			if not item then
+				return
+			end
+
+			local full_text = item.original_text or item.text
+
+			-- Pre-calculate wrapped lines to determine height
+			local popup_width = math.floor(vim.o.columns * 0.6)
+			local wrapped_lines = {}
+			local current_line = ""
+
+			for word in full_text:gmatch("%S+") do
+				if #current_line + #word + 1 <= popup_width - 4 then
+					current_line = current_line .. (current_line == "" and "" or " ") .. word
+				else
+					table.insert(wrapped_lines, current_line)
+					current_line = word
+				end
+			end
+			if current_line ~= "" then
+				table.insert(wrapped_lines, current_line)
+			end
+
+			if #wrapped_lines == 0 then
+				wrapped_lines = { full_text }
+			end
+
+			-- Dynamic height based on content (min 3, max 20)
+			local popup_height = math.max(3, math.min(#wrapped_lines + 2, 20))
+
+			-- Show full thought in popup
+			local full_text_popup = Popup({
+				enter = true,
+				focusable = true,
+				zindex = 100,
+				position = "50%",
+				size = {
+					width = "60%",
+					height = popup_height,
+				},
+				border = {
+					style = "rounded",
+					text = {
+						top = " Full Thought ",
+						top_align = "center",
+					},
+				},
+			})
+
+			full_text_popup:mount()
+			vim.api.nvim_buf_set_lines(full_text_popup.bufnr, 0, -1, false, wrapped_lines)
+
+			-- Close with q or Esc
+			vim.api.nvim_buf_set_keymap(full_text_popup.bufnr, "n", "q", "", {
+				noremap = true,
+				callback = function()
+					full_text_popup:unmount()
+				end,
+			})
+
+			vim.api.nvim_buf_set_keymap(full_text_popup.bufnr, "n", "<Esc>", "", {
+				noremap = true,
+				callback = function()
+					full_text_popup:unmount()
+				end,
+			})
+		end,
+	})
+
 	local is_quit = false
 	menu:on(event.QuitPre, function()
 		is_quit = true
