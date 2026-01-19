@@ -1,6 +1,17 @@
 local M = {}
 
 M.init = function()
+	-- Check for required dependencies
+	local ok_nui, _ = pcall(require, "nui.input")
+	if not ok_nui then
+		vim.notify(
+			"thought-flow.nvim requires nui.nvim. Install it with your plugin manager.",
+			vim.log.levels.ERROR,
+			{ title = "thought-flow.nvim" }
+		)
+		return false
+	end
+
 	require("thought-flow.repo").init()
 	local nvim = require("thought-flow.nvim")
 	nvim.init()
@@ -21,13 +32,17 @@ M.init = function()
 	vim.api.nvim_create_user_command("ThoughtFlowRemoveLine", M.remove_line, {
 		desc = "Remove thought at current cursor line"
 	})
+
+	return true
 end
 
 M.setup = function(options)
 	require("thought-flow.config").configure(options)
 	if not M._initialized then
-		M.init()
-		M._initialized = true
+		local success = M.init()
+		if success then
+			M._initialized = true
+		end
 	end
 end
 
@@ -52,9 +67,9 @@ M.annotate_buffer = function(bufnr)
 end
 
 M.capture = function()
-	local config = require("thought-flow.config")
 	local Input = require("nui.input")
 	local event = require("nui.utils.autocmd").event
+	local config = require("thought-flow.config")
 	local repo = require("thought-flow.repo")
 
 	local thought_line_number = vim.api.nvim_win_get_cursor(0)[1]
