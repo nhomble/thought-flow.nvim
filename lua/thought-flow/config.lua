@@ -33,6 +33,6 @@ local M = {}
 
 M.options = __DEFAULT_OPTIONS
 M.configure = function(user_options)
-	M.options = vim.tbl_deep_extend("keep", user_options or {}, __DEFAULT_OPTIONS)
+	M.options = vim.tbl_deep_extend("force", __DEFAULT_OPTIONS, user_options or {})
 end
 return M
