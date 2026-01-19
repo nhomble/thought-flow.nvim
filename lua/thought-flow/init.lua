@@ -11,6 +11,10 @@ end
 
 M.setup = function(options)
 	require("thought-flow.config").configure(options)
+	if not M._initialized then
+		M.init()
+		M._initialized = true
+	end
 end
 
 M.clear = function()
@@ -167,5 +171,4 @@ M.remove_line = function()
 	M.annotate_buffer()
 end
 
-M.init()
 return M
