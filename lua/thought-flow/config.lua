@@ -2,6 +2,7 @@ local __DEFAULT_OPTIONS = {
 	path = vim.fn.stdpath("data") .. "/thought-flow.json",
 	ui = {
 		prompt = "> ",
+		max_thought_display_width = 50,
 	},
 	-- swap with your choice of notification channel
 	notifications = {
@@ -13,6 +14,10 @@ local __DEFAULT_OPTIONS = {
 		text = "💭",
 		namespace = "thought-flow-namespace",
 		color = "#00bfff"
+	},
+	orphaned = {
+		indicator = "[!] ",
+		color = "#ff0000"
 	},
 	-- in case users want to swap out the internal deser
 	json = {

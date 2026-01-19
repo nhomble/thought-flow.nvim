@@ -60,7 +60,10 @@ vim.keymap.set('n', '<leader>tD', ':ThoughtFlowClear<CR>', { desc = "Clear all t
 - `N` - Jump to previous search match
 - `<Esc>` or `<C-c>` - Close menu
 
-Long thoughts are automatically truncated with "..." in the menu list.
+**Notes:**
+- Long thoughts are automatically truncated with "..." in the menu list
+- Orphaned thoughts (file or line no longer exists) are marked with `[!]` prefix
+- You can still view orphaned thoughts with `<Space>`, but `<CR>` will show an error
 
 ## API
 
@@ -97,6 +100,7 @@ require("thought-flow").setup({
   path = vim.fn.stdpath("data") .. "/thought-flow.json",
   ui = {
     prompt = "> ",
+    max_thought_display_width = 50,  -- Truncate long thoughts in menu
   },
   notifications = {
     error = function(msg)
@@ -107,6 +111,10 @@ require("thought-flow").setup({
     text = "💭",
     namespace = "thought-flow-namespace",
     color = "#00bfff"
+  },
+  orphaned = {
+    indicator = "[!] ",  -- Prefix for orphaned thoughts
+    color = "#ff0000"    -- Color for orphaned indicator (future use)
   },
   json = {
     decode = function(s) return vim.json.decode(s) end,

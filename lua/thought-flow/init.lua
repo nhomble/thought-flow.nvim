@@ -141,11 +141,39 @@ M.review = function()
 		return text:sub(1, max_width - 3) .. "..."
 	end
 
+	-- Helper to check if thought is orphaned
+	local function is_orphaned(thought_data)
+		local file = thought_data.file
+		local line_number = thought_data.line_number
+
+		-- Check if file exists
+		local stat = vim.loop.fs_stat(file)
+		if not stat or stat.type ~= "file" then
+			return true
+		end
+
+		-- Check if line number is valid
+		local ok, bufnr = pcall(vim.fn.bufadd, file)
+		if not ok then
+			return true
+		end
+
+		pcall(vim.fn.bufload, bufnr)
+		local line_count = vim.api.nvim_buf_line_count(bufnr)
+
+		return line_number > line_count
+	end
+
 	for key in pairs(json) do
-		local display_text = truncate_text(key, config.options.ui.max_thought_display_width)
+		local thought_data = json[key]
+		local orphaned = is_orphaned(thought_data)
+		local indicator = orphaned and (config.options.orphaned.indicator or "[!] ") or ""
+		local display_text = indicator .. truncate_text(key, config.options.ui.max_thought_display_width)
+
 		local item = Menu.item(display_text, {
-			thought_flow = json[key],
+			thought_flow = thought_data,
 			original_text = key,
+			is_orphaned = orphaned,
 		})
 		table.insert(lines, item)
 	end
@@ -187,6 +215,13 @@ M.review = function()
 			if item == nil then
 				return
 			end
+
+			-- Check if thought is orphaned
+			if item.is_orphaned then
+				vim.notify("Cannot navigate: file or line no longer exists", vim.log.levels.WARN, { title = "thought-flow" })
+				return
+			end
+
 			local file = item["thought_flow"].file
 			local ln = item["thought_flow"].line_number
 			nvim.open_file_at_line(file, ln)
