@@ -95,6 +95,12 @@ M.capture = function()
 		prompt = config.options.ui.prompt,
 		default_value = "",
 		on_submit = function(value)
+			-- Validate input
+			if not value or value:match("^%s*$") then
+				vim.notify("Thought cannot be empty", vim.log.levels.WARN, { title = "thought-flow" })
+				return
+			end
+
 			repo.add(value, {
 				line_number = thought_line_number,
 				file = thought_file,
@@ -164,8 +170,7 @@ M.review = function()
 		return line_number > line_count
 	end
 
-	for key in pairs(json) do
-		local thought_data = json[key]
+	for key, thought_data in pairs(json) do
 		local orphaned = is_orphaned(thought_data)
 		local indicator = orphaned and (config.options.orphaned.indicator or "[!] ") or ""
 		local display_text = indicator .. truncate_text(key, config.options.ui.max_thought_display_width)
