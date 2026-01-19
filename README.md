@@ -53,6 +53,10 @@ vim.keymap.set('n', '<leader>tD', ':ThoughtFlowClear<CR>', { desc = "Clear all t
 - `<CR>` or `<Space>` - Open file/line number where thought was captured
 - `D` - Delete the selected thought
 - `j`/`k` or arrow keys - Navigate thoughts
+- `/` - Search forward through thoughts
+- `?` - Search backward through thoughts
+- `n` - Jump to next search match
+- `N` - Jump to previous search match
 - `<Esc>` or `<C-c>` - Close menu
 
 ## API

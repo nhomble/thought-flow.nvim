@@ -13,6 +13,24 @@ end
 function ExtendedMenu:mount()
   self:map("n", "D", self.on_delete, { noremap = true, nowait = true })
 
+  -- Enable vim search
+  self:map("n", "/", function()
+    vim.fn.feedkeys("/", "n")
+  end, { noremap = true })
+
+  self:map("n", "?", function()
+    vim.fn.feedkeys("?", "n")
+  end, { noremap = true })
+
+  -- Enable n/N for next/previous search match
+  self:map("n", "n", function()
+    pcall(vim.cmd, "normal! n")
+  end, { noremap = true })
+
+  self:map("n", "N", function()
+    pcall(vim.cmd, "normal! N")
+  end, { noremap = true })
+
   ExtendedMenu.super.mount(self)
 end
 
