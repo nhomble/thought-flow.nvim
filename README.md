@@ -24,8 +24,8 @@ draught down some notes (with context) that don't belong as actual `TODOs` in yo
     require("thought-flow").setup({
       -- your custom config here
       annotations = {
-        text = "💭",
-        color = "#00bfff"
+        text = "▪",
+        color = "#808080"
       }
     })
   end
@@ -108,9 +108,9 @@ require("thought-flow").setup({
     end,
   },
   annotations = {
-    text = "💭",
+    text = "▪",
     namespace = "thought-flow-namespace",
-    color = "#00bfff"
+    color = "#808080"
   },
   orphaned = {
     indicator = "[!] ",  -- Prefix for orphaned thoughts

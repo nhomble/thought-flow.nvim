@@ -11,9 +11,9 @@ local __DEFAULT_OPTIONS = {
 		end,
 	},
 	annotations = {
-		text = "💭",
+		text = "▪",
 		namespace = "thought-flow-namespace",
-		color = "#00bfff"
+		color = "#808080"
 	},
 	orphaned = {
 		indicator = "[!] ",
