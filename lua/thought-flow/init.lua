@@ -7,6 +7,20 @@ M.init = function()
 	nvim.register_autocmd(function()
 		M.annotate_buffer()
 	end)
+
+	-- Create user commands
+	vim.api.nvim_create_user_command("ThoughtFlowCapture", M.capture, {
+		desc = "Capture a thought at the current cursor position"
+	})
+	vim.api.nvim_create_user_command("ThoughtFlowReview", M.review, {
+		desc = "Review all captured thoughts"
+	})
+	vim.api.nvim_create_user_command("ThoughtFlowClear", M.clear, {
+		desc = "Clear all thoughts"
+	})
+	vim.api.nvim_create_user_command("ThoughtFlowRemoveLine", M.remove_line, {
+		desc = "Remove thought at current cursor line"
+	})
 end
 
 M.setup = function(options)

@@ -32,6 +32,29 @@ draught down some notes (with context) that don't belong as actual `TODOs` in yo
 }
 ```
 
+## Usage
+
+The plugin provides user commands for easy access:
+
+- `:ThoughtFlowCapture` - Capture a thought at the current cursor position
+- `:ThoughtFlowReview` - Review all captured thoughts in a menu
+- `:ThoughtFlowRemoveLine` - Remove thought at current cursor line
+- `:ThoughtFlowClear` - Clear all thoughts
+
+You can bind these to keymaps in your config:
+```lua
+vim.keymap.set('n', '<leader>tc', ':ThoughtFlowCapture<CR>', { desc = "Capture thought" })
+vim.keymap.set('n', '<leader>tv', ':ThoughtFlowReview<CR>', { desc = "Review thoughts" })
+vim.keymap.set('n', '<leader>td', ':ThoughtFlowRemoveLine<CR>', { desc = "Delete thought" })
+vim.keymap.set('n', '<leader>tD', ':ThoughtFlowClear<CR>', { desc = "Clear all thoughts" })
+```
+
+**Menu Actions (in Review mode):**
+- `<CR>` or `<Space>` - Open file/line number where thought was captured
+- `D` - Delete the selected thought
+- `j`/`k` or arrow keys - Navigate thoughts
+- `<Esc>` or `<C-c>` - Close menu
+
 ## API
 
 **capture**
@@ -57,11 +80,6 @@ clear your thoughts
 ```lua
 require("thought-flow").clear()
 ```
-
-### Menu Actions
-
-- `<CR>` to open file/line number where thought was captured
-- `D` to remove the thought
 
 ## Configuration
 
