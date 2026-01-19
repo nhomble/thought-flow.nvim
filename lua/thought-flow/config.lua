@@ -6,7 +6,7 @@ local __DEFAULT_OPTIONS = {
 	-- swap with your choice of notification channel
 	notifications = {
 		error = function(msg)
-			print("[ERROR] [thought-flow] " .. msg)
+			vim.notify(msg, vim.log.levels.ERROR, { title = "thought-flow" })
 		end,
 	},
 	annotations = {

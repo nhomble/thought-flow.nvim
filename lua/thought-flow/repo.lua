@@ -23,14 +23,14 @@ local write = function()
 		file:write(json)
 		file:close()
 	else
-		print("[Error] Unable to open file for writing: " .. err)
+		config.options.notifications.error("Unable to open file for writing: " .. err)
 	end
 end
 
 local read = function()
 	local file, err = io.open(config.options.path, "r") -- Open file in read mode
 	if not file then
-		print("[Error] opening file: " .. err)
+		config.options.notifications.error("Unable to open file for reading: " .. err)
 		return
 	end
 
