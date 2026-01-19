@@ -180,7 +180,7 @@ M.review = function()
 			if item == nil then
 				return
 			end
-			repo.remove(item.text)
+			repo.remove(item.original_text or item.text)
 			M.annotate_buffer(bufnr)
 		end,
 		on_submit = function(item)

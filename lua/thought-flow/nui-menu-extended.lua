@@ -11,7 +11,7 @@ function ExtendedMenu:init(popup_options, options)
 end
 
 function ExtendedMenu:mount()
-  self:map("n", "D", self.on_delete, { noremap = true, nowait = true })
+  self:map("n", "d", self.on_delete, { noremap = true, nowait = true })
 
   -- Enable vim search
   self:map("n", "/", function()

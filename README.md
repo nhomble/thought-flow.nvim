@@ -52,7 +52,7 @@ vim.keymap.set('n', '<leader>tD', ':ThoughtFlowClear<CR>', { desc = "Clear all t
 **Menu Actions (in Review mode):**
 - `<Space>` - Show full thought text in popup (supports visual mode, yank, search)
 - `<CR>` - Navigate to file/line number where thought was captured
-- `D` - Delete the selected thought
+- `d` - Delete the selected thought
 - `j`/`k` or arrow keys - Navigate thoughts
 - `/` - Search forward through thoughts
 - `?` - Search backward through thoughts
