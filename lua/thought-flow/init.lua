@@ -1,5 +1,12 @@
 local M = {}
 
+-- Status cache for performance
+local _status_cache = nil
+
+local function invalidate_status_cache()
+	_status_cache = nil
+end
+
 M.init = function()
 	-- Check for required dependencies
 	local ok_nui, _ = pcall(require, "nui.input")
@@ -50,6 +57,7 @@ M.clear = function()
 	local repo = require("thought-flow.repo")
 	repo.clear()
 	M.annotate_buffer()
+	invalidate_status_cache()
 end
 
 M.annotate_buffer = function(bufnr)
@@ -108,6 +116,7 @@ M.capture = function()
 				timestamp = thought_now,
 			})
 			M.annotate_buffer()
+			invalidate_status_cache()
 		end,
 	})
 
@@ -215,6 +224,7 @@ M.review = function()
 			end
 			repo.remove(item.original_text or item.text)
 			M.annotate_buffer(bufnr)
+			invalidate_status_cache()
 		end,
 		on_submit = function(item)
 			if item == nil then
@@ -328,6 +338,25 @@ M.remove_line = function()
 	local thought_file = vim.api.nvim_buf_get_name(0)
 	repo.remove_thought(thought_file, thought_line_number)
 	M.annotate_buffer()
+	invalidate_status_cache()
+end
+
+M.statistics = function()
+	if _status_cache ~= nil then
+		return _status_cache
+	end
+
+	local repo = require("thought-flow.repo")
+	local thoughts = repo.get_all()
+	local count = 0
+	for _ in pairs(thoughts) do
+		count = count + 1
+	end
+
+	_status_cache = {
+		global_count = count,
+	}
+	return _status_cache
 end
 
 return M

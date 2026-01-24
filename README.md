@@ -65,6 +65,54 @@ vim.keymap.set('n', '<leader>tD', ':ThoughtFlowClear<CR>', { desc = "Clear all t
 - Orphaned thoughts (file or line no longer exists) are marked with `[!]` prefix
 - You can still view orphaned thoughts with `<Space>`, but `<CR>` will show an error
 
+## Status Line Integration
+
+You can display your thought count in your status line. The plugin provides a `statistics()` function that returns thought statistics.
+
+**Lualine:**
+```lua
+require('lualine').setup({
+  sections = {
+    lualine_x = {
+      function()
+        local stats = require('thought-flow').statistics()
+        local count = stats.global_count
+        return count > 0 and ("▪ " .. count) or ""
+      end,
+      color = { fg = '#808080' },
+    }
+  }
+})
+```
+
+**Heirline (AstroNvim):**
+```lua
+-- In lua/plugins/heirline.lua
+return {
+  "rebelot/heirline.nvim",
+  opts = function(_, opts)
+    local status = require("astroui.status")
+    opts.statusline[#opts.statusline + 1] = status.component.builder({
+      provider = function()
+        local stats = require('thought-flow').statistics()
+        local count = stats.global_count
+        return count > 0 and ("▪ " .. count) or ""
+      end,
+      hl = { fg = "gray" },
+    })
+    return opts
+  end,
+}
+```
+
+**Native statusline:**
+```lua
+vim.o.statusline = vim.o.statusline .. '%{luaeval("(function() local s = require(\\'thought-flow\\').statistics(); return s.global_count > 0 and (\\'▪ \\' .. s.global_count) or \\'\\'  end)()")}'
+```
+
+The `statistics()` function returns a table with:
+- `global_count` - Total number of thoughts across all files
+
 ## API
 
 **capture**
