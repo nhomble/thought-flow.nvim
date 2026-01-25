@@ -13,11 +13,11 @@ local __DEFAULT_OPTIONS = {
 	annotations = {
 		text = "▪",
 		namespace = "thought-flow-namespace",
-		color = "#808080"
+		color = "#808080",
 	},
 	orphaned = {
 		indicator = "[!] ",
-		color = "#ff0000"
+		color = "#ff0000",
 	},
 	-- in case users want to swap out the internal deser
 	json = {

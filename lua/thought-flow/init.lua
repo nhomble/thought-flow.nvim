@@ -28,16 +28,16 @@ M.init = function()
 
 	-- Create user commands
 	vim.api.nvim_create_user_command("ThoughtFlowCapture", M.capture, {
-		desc = "Capture a thought at the current cursor position"
+		desc = "Capture a thought at the current cursor position",
 	})
 	vim.api.nvim_create_user_command("ThoughtFlowReview", M.review, {
-		desc = "Review all captured thoughts"
+		desc = "Review all captured thoughts",
 	})
 	vim.api.nvim_create_user_command("ThoughtFlowClear", M.clear, {
-		desc = "Clear all thoughts"
+		desc = "Clear all thoughts",
 	})
 	vim.api.nvim_create_user_command("ThoughtFlowRemoveLine", M.remove_line, {
-		desc = "Remove thought at current cursor line"
+		desc = "Remove thought at current cursor line",
 	})
 
 	return true
@@ -69,7 +69,7 @@ M.annotate_buffer = function(bufnr)
 	local thought_file = vim.api.nvim_buf_get_name(bufnr)
 	local file_thoughts = repo.find_thoughts_for_file(thought_file)
 	nvim.clear_annotations(bufnr)
-	for _key, value in pairs(file_thoughts) do
+	for _, value in pairs(file_thoughts) do
 		nvim.annotate(bufnr, value.line_number)
 	end
 end
@@ -149,7 +149,7 @@ M.review = function()
 
 	-- Helper to truncate text
 	local function truncate_text(text, max_width)
-		max_width = max_width or 50  -- Default if not configured
+		max_width = max_width or 50 -- Default if not configured
 		if #text <= max_width then
 			return text
 		end
@@ -168,13 +168,13 @@ M.review = function()
 		end
 
 		-- Check if line number is valid
-		local ok, bufnr = pcall(vim.fn.bufadd, file)
+		local ok, file_bufnr = pcall(vim.fn.bufadd, file)
 		if not ok then
 			return true
 		end
 
-		pcall(vim.fn.bufload, bufnr)
-		local line_count = vim.api.nvim_buf_line_count(bufnr)
+		pcall(vim.fn.bufload, file_bufnr)
+		local line_count = vim.api.nvim_buf_line_count(file_bufnr)
 
 		return line_number > line_count
 	end

@@ -58,7 +58,8 @@ M.register_autocmd = function(callback)
 	-- Add autocommand to run your function on file load
 	vim.api.nvim_create_autocmd("BufReadPost", {
 		group = config.options.autocmd.group,
-		pattern = config.options.autocmd.pattern, -- This pattern matches all files. You can specify a more specific pattern if needed.
+		-- This pattern matches all files. You can specify a more specific pattern if needed.
+		pattern = config.options.autocmd.pattern,
 		callback = function()
 			callback()
 		end,
