@@ -63,6 +63,9 @@ M.init = function()
 	vim.api.nvim_create_user_command("ThoughtFlowPrev", M.goto_prev, {
 		desc = "Go to previous thought in current file",
 	})
+	vim.api.nvim_create_user_command("ThoughtFlowShow", M.show_thought, {
+		desc = "Show the thought on the current line",
+	})
 
 	return true
 end
@@ -167,6 +170,41 @@ end
 
 M.review = function()
 	require("neo-tree.command").execute({ source = "thought-flow", toggle = true })
+end
+
+M.show_thought = function()
+	local repo = require("thought-flow.repo")
+	local file = vim.api.nvim_buf_get_name(0)
+	local line = vim.api.nvim_win_get_cursor(0)[1]
+
+	local thoughts_here = {}
+	for thought_text, data in pairs(repo.find_thoughts_for_file(file)) do
+		if data.line_number == line then
+			table.insert(thoughts_here, thought_text)
+		end
+	end
+
+	if #thoughts_here == 0 then
+		vim.notify("No thought on this line", vim.log.levels.INFO, { title = "thought-flow" })
+		return
+	end
+
+	table.sort(thoughts_here)
+	local node_id = file .. "::" .. thoughts_here[1]
+
+	-- Not passed as `reveal_file`: neo-tree normalizes that as a real
+	-- filesystem path (e.g. collapsing "//" and trailing "/"), which can
+	-- mangle a thought's id if its text contains those characters. Focus
+	-- the node ourselves once the window/tree is ready instead.
+	require("neo-tree.command").execute({ source = "thought-flow", action = "focus" })
+	vim.schedule(function()
+		local manager = require("neo-tree.sources.manager")
+		local renderer = require("neo-tree.ui.renderer")
+		local state = manager.get_state("thought-flow")
+		if state then
+			renderer.focus_node(state, node_id, false)
+		end
+	end)
 end
 
 M.remove_line = function()
