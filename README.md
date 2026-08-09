@@ -6,11 +6,24 @@ draught down some notes (with context) that don't belong as actual `TODOs` in yo
 
 [lazy.nvim](https://github.com/folke/lazy.nvim)
 
+Review runs as a `neo-tree.nvim` source, so it's a hard dependency alongside
+`nui.nvim` (used by capture and the help popup) — both declared under
+`dependencies` below, with `neo-tree.nvim` registering the `"thought-flow"`
+source via its `opts`.
+
 **Minimal setup (uses defaults):**
 ```lua
 {
   "nhomble/thought-flow.nvim",
-  dependencies = { "MunifTanjim/nui.nvim" },
+  dependencies = {
+    "MunifTanjim/nui.nvim",
+    {
+      "nvim-neo-tree/neo-tree.nvim",
+      opts = function(_, opts)
+        table.insert(opts.sources, "thought-flow")
+      end,
+    },
+  },
   opts = {}
 }
 ```
@@ -19,7 +32,15 @@ draught down some notes (with context) that don't belong as actual `TODOs` in yo
 ```lua
 {
   "nhomble/thought-flow.nvim",
-  dependencies = { "MunifTanjim/nui.nvim" },
+  dependencies = {
+    "MunifTanjim/nui.nvim",
+    {
+      "nvim-neo-tree/neo-tree.nvim",
+      opts = function(_, opts)
+        table.insert(opts.sources, "thought-flow")
+      end,
+    },
+  },
   config = function()
     require("thought-flow").setup({
       -- your custom config here
@@ -34,36 +55,34 @@ draught down some notes (with context) that don't belong as actual `TODOs` in yo
 
 ## Usage
 
-The plugin provides user commands for easy access:
+Commands: `:ThoughtFlowCapture`, `:ThoughtFlowReview` (toggle the neo-tree
+window), `:ThoughtFlowRemoveLine`, `:ThoughtFlowClear`, `:ThoughtFlowNext` /
+`:ThoughtFlowPrev` (jump between thoughts in the current file, no
+wraparound), `:ThoughtFlowShow` (reveal this line's thought(s) in the tree),
+`:ThoughtFlowExport` (copy all thoughts as markdown to the clipboard, with
+a preview split), `:ThoughtFlowHelp` (command popup). Bind whatever you like:
 
-- `:ThoughtFlowCapture` - Capture a thought at the current cursor position
-- `:ThoughtFlowReview` - Review all captured thoughts in a menu
-- `:ThoughtFlowRemoveLine` - Remove thought at current cursor line
-- `:ThoughtFlowClear` - Clear all thoughts
-
-You can bind these to keymaps in your config:
 ```lua
 vim.keymap.set('n', '<leader>tc', ':ThoughtFlowCapture<CR>', { desc = "Capture thought" })
 vim.keymap.set('n', '<leader>tv', ':ThoughtFlowReview<CR>', { desc = "Review thoughts" })
 vim.keymap.set('n', '<leader>td', ':ThoughtFlowRemoveLine<CR>', { desc = "Delete thought" })
 vim.keymap.set('n', '<leader>tD', ':ThoughtFlowClear<CR>', { desc = "Clear all thoughts" })
+vim.keymap.set('n', ']t', ':ThoughtFlowNext<CR>', { desc = "Next thought in file" })
+vim.keymap.set('n', '[t', ':ThoughtFlowPrev<CR>', { desc = "Previous thought in file" })
+vim.keymap.set('n', '<leader>ts', ':ThoughtFlowShow<CR>', { desc = "Show thought on this line" })
+vim.keymap.set('n', '<leader>t?', ':ThoughtFlowHelp<CR>', { desc = "Thought-flow help" })
 ```
 
-**Menu Actions (in Review mode):**
-- `<Space>` - Show full thought text in popup (supports visual mode, yank, search)
-- `<CR>` - Navigate to file/line number where thought was captured
-- `d` - Delete the selected thought
-- `j`/`k` or arrow keys - Navigate thoughts
-- `/` - Search forward through thoughts
-- `?` - Search backward through thoughts
-- `n` - Jump to next search match
-- `N` - Jump to previous search match
-- `<Esc>` or `<C-c>` - Close menu
+Export groups by file/line, each with a 3-line blockquote of context around
+the annotated line, a `thoughts:` bullet list (multiple thoughts on one line
+become multiple bullets), and `---` between entries.
 
-**Notes:**
-- Long thoughts are automatically truncated with "..." in the menu list
-- Orphaned thoughts (file or line no longer exists) are marked with `[!]` prefix
-- You can still view orphaned thoughts with `<Space>`, but `<CR>` will show an error
+In the neo-tree window: `<CR>`/`o` on a thought jumps to its file/line and
+opens an editable scratch buffer at the bottom (`:w` saves, `q` closes
+without saving); on a file node it expands/collapses. `<Space>` previews
+the full text, `d` deletes. Orphaned thoughts (file/line gone) show `[!]`
+and can't be navigated to. A line with multiple thoughts gets one marker
+suffixed `xN`.
 
 ## Status Line Integration
 

@@ -58,9 +58,15 @@ M.get_all = function()
 	return state
 end
 
+---@return boolean success false if a different thought already uses this text
 M.add = function(thought, data)
+	if state[thought] ~= nil then
+		config.options.notifications.error("A thought with this text already exists: " .. thought)
+		return false
+	end
 	state[thought] = data
 	write()
+	return true
 end
 
 M.remove = function(thought)
@@ -83,13 +89,26 @@ M.find_thoughts_for_file = function(file)
 	return result
 end
 
+M.get_sorted_for_file = function(file)
+	local result = {}
+	for _, data in pairs(M.find_thoughts_for_file(file)) do
+		table.insert(result, data)
+	end
+	table.sort(result, function(a, b)
+		return a.line_number < b.line_number
+	end)
+	return result
+end
+
 M.remove_thought = function(file, line_number)
-	-- remove from table
+	local keys_to_remove = {}
 	for k, data in pairs(state) do
 		if data.file == file and data.line_number == line_number then
-			state[k] = nil
-			break
+			table.insert(keys_to_remove, k)
 		end
+	end
+	for _, k in ipairs(keys_to_remove) do
+		state[k] = nil
 	end
 	write()
 end

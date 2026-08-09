@@ -40,11 +40,20 @@ M.init = function()
 		bg = "NONE", -- Background color (use 'NONE' for no background)
 		bold = true, -- Make the text bold
 	})
+	vim.api.nvim_set_hl(0, "ThoughtFlowOrphaned", {
+		fg = config.options.orphaned.color,
+		bg = "NONE",
+		bold = true,
+	})
 end
 
-M.annotate = function(bufnr, line_number)
+M.annotate = function(bufnr, line_number, count)
 	local config = require("thought-flow.config")
-	add_virtual_text(M.annotation_namespace, bufnr, line_number, config.options.annotations.text, "InfoSignHL")
+	local text = config.options.annotations.text
+	if count and count > 1 then
+		text = text .. " x" .. count
+	end
+	add_virtual_text(M.annotation_namespace, bufnr, line_number, text, "InfoSignHL")
 end
 
 M.clear_annotations = function(bufnr)

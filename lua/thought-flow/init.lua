@@ -7,6 +7,24 @@ local function invalidate_status_cache()
 	_status_cache = nil
 end
 
+M.invalidate_status_cache = invalidate_status_cache
+
+local function refresh_tree()
+	local ok, manager = pcall(require, "neo-tree.sources.manager")
+	if not ok then
+		return
+	end
+	local ok_renderer, renderer = pcall(require, "neo-tree.ui.renderer")
+	if not ok_renderer then
+		return
+	end
+
+	local state = manager.get_state("thought-flow")
+	if state and renderer.window_exists(state) then
+		manager.refresh("thought-flow")
+	end
+end
+
 M.init = function()
 	-- Check for required dependencies
 	local ok_nui, _ = pcall(require, "nui.input")
@@ -39,6 +57,21 @@ M.init = function()
 	vim.api.nvim_create_user_command("ThoughtFlowRemoveLine", M.remove_line, {
 		desc = "Remove thought at current cursor line",
 	})
+	vim.api.nvim_create_user_command("ThoughtFlowNext", M.goto_next, {
+		desc = "Go to next thought in current file",
+	})
+	vim.api.nvim_create_user_command("ThoughtFlowPrev", M.goto_prev, {
+		desc = "Go to previous thought in current file",
+	})
+	vim.api.nvim_create_user_command("ThoughtFlowShow", M.show_thought, {
+		desc = "Show the thought on the current line",
+	})
+	vim.api.nvim_create_user_command("ThoughtFlowHelp", M.show_help, {
+		desc = "Show thought-flow keymap help",
+	})
+	vim.api.nvim_create_user_command("ThoughtFlowExport", M.export, {
+		desc = "Export all thoughts as markdown to the clipboard",
+	})
 
 	return true
 end
@@ -58,6 +91,7 @@ M.clear = function()
 	repo.clear()
 	M.annotate_buffer()
 	invalidate_status_cache()
+	refresh_tree()
 end
 
 M.annotate_buffer = function(bufnr)
@@ -69,8 +103,13 @@ M.annotate_buffer = function(bufnr)
 	local thought_file = vim.api.nvim_buf_get_name(bufnr)
 	local file_thoughts = repo.find_thoughts_for_file(thought_file)
 	nvim.clear_annotations(bufnr)
+
+	local counts_by_line = {}
 	for _, value in pairs(file_thoughts) do
-		nvim.annotate(bufnr, value.line_number)
+		counts_by_line[value.line_number] = (counts_by_line[value.line_number] or 0) + 1
+	end
+	for line_number, count in pairs(counts_by_line) do
+		nvim.annotate(bufnr, line_number, count)
 	end
 end
 
@@ -109,14 +148,19 @@ M.capture = function()
 				return
 			end
 
-			repo.add(value, {
+			local added = repo.add(value, {
 				line_number = thought_line_number,
 				file = thought_file,
 				content = thought_line_content,
 				timestamp = thought_now,
 			})
+			if not added then
+				return
+			end
+
 			M.annotate_buffer()
 			invalidate_status_cache()
+			refresh_tree()
 		end,
 	})
 
@@ -136,199 +180,189 @@ M.capture = function()
 end
 
 M.review = function()
-	local Menu = require("thought-flow.nui-menu-extended")
-	local Popup = require("nui.popup")
-	local event = require("nui.utils.autocmd").event
-	local repo = require("thought-flow.repo")
-	local nvim = require("thought-flow.nvim")
-	local config = require("thought-flow.config")
+	require("neo-tree.command").execute({ source = "thought-flow", toggle = true })
+end
 
-	local bufnr = vim.api.nvim_get_current_buf()
-	local json = repo.get_all()
-	local lines = {}
+M.export = function()
+	require("thought-flow.export").to_clipboard()
+end
 
-	-- Helper to truncate text
-	local function truncate_text(text, max_width)
-		max_width = max_width or 50 -- Default if not configured
-		if #text <= max_width then
-			return text
-		end
-		return text:sub(1, max_width - 3) .. "..."
+local help_popup = nil
+
+local function close_help()
+	if help_popup then
+		help_popup:unmount()
+		help_popup = nil
+	end
+end
+
+M.show_help = function()
+	if help_popup then
+		close_help()
+		return
 	end
 
-	-- Helper to check if thought is orphaned
-	local function is_orphaned(thought_data)
-		local file = thought_data.file
-		local line_number = thought_data.line_number
-
-		-- Check if file exists
-		local stat = vim.loop.fs_stat(file)
-		if not stat or stat.type ~= "file" then
-			return true
-		end
-
-		-- Check if line number is valid
-		local ok, file_bufnr = pcall(vim.fn.bufadd, file)
-		if not ok then
-			return true
-		end
-
-		pcall(vim.fn.bufload, file_bufnr)
-		local line_count = vim.api.nvim_buf_line_count(file_bufnr)
-
-		return line_number > line_count
-	end
-
-	for key, thought_data in pairs(json) do
-		local orphaned = is_orphaned(thought_data)
-		local indicator = orphaned and (config.options.orphaned.indicator or "[!] ") or ""
-		local display_text = indicator .. truncate_text(key, config.options.ui.max_thought_display_width)
-
-		local item = Menu.item(display_text, {
-			thought_flow = thought_data,
-			original_text = key,
-			is_orphaned = orphaned,
-		})
-		table.insert(lines, item)
-	end
-	local popup_options = {
-		position = "50%",
-		size = {
-			width = 50,
-		},
-
-		border = {
-			style = "rounded",
-			text = {
-				top = "[Find thought]",
-				top_align = "center",
-			},
-		},
-		win_options = {
-			winhighlight = "Normal:Normal",
-		},
+	local entries = {
+		{ cmd = "ThoughtFlowCapture", desc = "Capture a thought at cursor" },
+		{ cmd = "ThoughtFlowReview", desc = "Toggle the thoughts neo-tree" },
+		{ cmd = "ThoughtFlowNext", desc = "Next thought in file" },
+		{ cmd = "ThoughtFlowPrev", desc = "Previous thought in file" },
+		{ cmd = "ThoughtFlowShow", desc = "Show thought on this line" },
+		{ cmd = "ThoughtFlowRemoveLine", desc = "Remove thought on this line" },
+		{ cmd = "ThoughtFlowClear", desc = "Clear all thoughts" },
+		{ cmd = "ThoughtFlowExport", desc = "Export all thoughts to clipboard" },
+		{ cmd = "ThoughtFlowHelp", desc = "This help" },
 	}
 
-	local menu = Menu(popup_options, {
-		lines = lines,
-		max_width = 20,
-		keymap = {
-			focus_next = { "j", "<Down>", "<Tab>" },
-			focus_prev = { "k", "<Up>", "<S-Tab>" },
-			close = { "<Esc>", "<C-c>" },
-			submit = { "<CR>", "<Space>" },
+	local max_cmd_width = 0
+	for _, e in ipairs(entries) do
+		max_cmd_width = math.max(max_cmd_width, #e.cmd)
+	end
+
+	local lines = { "" }
+	for _, e in ipairs(entries) do
+		local padding = string.rep(" ", max_cmd_width - #e.cmd + 3)
+		table.insert(lines, "  :" .. e.cmd .. padding .. e.desc)
+	end
+	table.insert(lines, "")
+
+	local max_line_width = 0
+	for _, line in ipairs(lines) do
+		max_line_width = math.max(max_line_width, #line)
+	end
+
+	local Popup = require("nui.popup")
+	help_popup = Popup({
+		position = "50%",
+		size = { width = math.max(max_line_width + 2, 30), height = #lines },
+		border = {
+			style = "rounded",
+			text = { top = " Thought Flow Keymaps ", top_align = "center" },
 		},
-		on_delete = function(item)
-			if item == nil then
-				return
-			end
-			repo.remove(item.original_text or item.text)
-			M.annotate_buffer(bufnr)
-			invalidate_status_cache()
-		end,
-		on_submit = function(item)
-			if item == nil then
-				return
-			end
-
-			-- Check if thought is orphaned
-			if item.is_orphaned then
-				vim.notify("Cannot navigate: file or line no longer exists", vim.log.levels.WARN, { title = "thought-flow" })
-				return
-			end
-
-			local file = item["thought_flow"].file
-			local ln = item["thought_flow"].line_number
-			nvim.open_file_at_line(file, ln)
-		end,
+		buf_options = {
+			modifiable = false,
+			buftype = "nofile",
+		},
 	})
-	menu:mount()
 
-	-- Add Space to show full thought text
-	vim.api.nvim_buf_set_keymap(menu.bufnr, "n", "<Space>", "", {
-		noremap = true,
-		nowait = true,
+	help_popup:mount()
+
+	local buf = help_popup.bufnr
+	vim.api.nvim_set_option_value("modifiable", true, { buf = buf })
+	vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+	vim.api.nvim_set_option_value("modifiable", false, { buf = buf })
+
+	local map_opts = { noremap = true, nowait = true }
+	help_popup:map("n", "?", close_help, map_opts)
+	help_popup:map("n", "q", close_help, map_opts)
+	help_popup:map("n", "<Esc>", close_help, map_opts)
+end
+
+local editor_seq = 0
+
+M.open_thought_editor = function(original_text, thought_data)
+	local repo = require("thought-flow.repo")
+	local nvim = require("thought-flow.nvim")
+
+	local buf = vim.api.nvim_create_buf(false, true)
+	vim.api.nvim_set_option_value("buftype", "acwrite", { buf = buf })
+	vim.api.nvim_set_option_value("bufhidden", "wipe", { buf = buf })
+	vim.api.nvim_set_option_value("swapfile", false, { buf = buf })
+	vim.api.nvim_set_option_value("filetype", "markdown", { buf = buf })
+	vim.api.nvim_set_option_value("modifiable", true, { buf = buf })
+
+	local base_name = "thought-flow://" .. thought_data.file .. ":" .. thought_data.line_number
+	if not pcall(vim.api.nvim_buf_set_name, buf, base_name) then
+		editor_seq = editor_seq + 1
+		pcall(vim.api.nvim_buf_set_name, buf, base_name .. "#" .. editor_seq)
+	end
+
+	vim.api.nvim_buf_set_lines(buf, 0, -1, false, vim.split(original_text, "\n", { plain = true }))
+	vim.api.nvim_set_option_value("modified", false, { buf = buf })
+
+	vim.cmd("botright 6split")
+	vim.api.nvim_win_set_buf(0, buf)
+	vim.api.nvim_set_option_value("winfixheight", true, { win = 0 })
+
+	vim.keymap.set("n", "q", function()
+		vim.api.nvim_set_option_value("modified", false, { buf = buf })
+		vim.cmd("close")
+	end, { buffer = buf, nowait = true })
+
+	local current_key = original_text
+	vim.api.nvim_create_autocmd("BufWriteCmd", {
+		buffer = buf,
 		callback = function()
-			local item = menu.tree:get_node()
-			if not item then
+			local new_lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+			while #new_lines > 1 and new_lines[#new_lines]:match("^%s*$") do
+				table.remove(new_lines)
+			end
+
+			if #new_lines > 1 then
+				vim.notify("Thought must be a single line", vim.log.levels.WARN, { title = "thought-flow" })
 				return
 			end
 
-			local full_text = item.original_text or item.text
+			local new_text = (new_lines[1] or ""):gsub("^%s+", ""):gsub("%s+$", "")
+			if new_text == "" then
+				vim.notify("Thought cannot be empty", vim.log.levels.WARN, { title = "thought-flow" })
+				return
+			end
 
-			-- Pre-calculate wrapped lines to determine height
-			local popup_width = math.floor(vim.o.columns * 0.6)
-			local wrapped_lines = {}
-			local current_line = ""
-
-			for word in full_text:gmatch("%S+") do
-				if #current_line + #word + 1 <= popup_width - 4 then
-					current_line = current_line .. (current_line == "" and "" or " ") .. word
-				else
-					table.insert(wrapped_lines, current_line)
-					current_line = word
+			if new_text ~= current_key then
+				if not repo.add(new_text, thought_data) then
+					return
 				end
-			end
-			if current_line ~= "" then
-				table.insert(wrapped_lines, current_line)
-			end
-
-			if #wrapped_lines == 0 then
-				wrapped_lines = { full_text }
+				repo.remove(current_key)
+				current_key = new_text
 			end
 
-			-- Dynamic height based on content (min 3, max 20)
-			local popup_height = math.max(3, math.min(#wrapped_lines + 2, 20))
+			vim.api.nvim_set_option_value("modified", false, { buf = buf })
 
-			-- Show full thought in popup
-			local full_text_popup = Popup({
-				enter = true,
-				focusable = true,
-				zindex = 100,
-				position = "50%",
-				size = {
-					width = "60%",
-					height = popup_height,
-				},
-				border = {
-					style = "rounded",
-					text = {
-						top = " Full Thought ",
-						top_align = "center",
-					},
-				},
-			})
-
-			full_text_popup:mount()
-			vim.api.nvim_buf_set_lines(full_text_popup.bufnr, 0, -1, false, wrapped_lines)
-
-			-- Close with q or Esc
-			vim.api.nvim_buf_set_keymap(full_text_popup.bufnr, "n", "q", "", {
-				noremap = true,
-				callback = function()
-					full_text_popup:unmount()
-				end,
-			})
-
-			vim.api.nvim_buf_set_keymap(full_text_popup.bufnr, "n", "<Esc>", "", {
-				noremap = true,
-				callback = function()
-					full_text_popup:unmount()
-				end,
-			})
+			local target_bufnr = nvim.find_existing_buffer(thought_data.file)
+			if target_bufnr then
+				M.annotate_buffer(target_bufnr)
+			end
+			invalidate_status_cache()
+			refresh_tree()
+			vim.notify("Thought updated", vim.log.levels.INFO, { title = "thought-flow" })
 		end,
 	})
+end
 
-	local is_quit = false
-	menu:on(event.QuitPre, function()
-		is_quit = true
-	end)
-	-- unmount component when cursor leaves buffer
-	menu:on(event.BufLeave, function()
-		if not is_quit then
-			menu:unmount()
+M.show_thought = function()
+	local repo = require("thought-flow.repo")
+	local file = vim.api.nvim_buf_get_name(0)
+	local line = vim.api.nvim_win_get_cursor(0)[1]
+
+	local thoughts_here = {}
+	for thought_text, data in pairs(repo.find_thoughts_for_file(file)) do
+		if data.line_number == line then
+			table.insert(thoughts_here, thought_text)
 		end
-	end, { once = true })
+	end
+
+	if #thoughts_here == 0 then
+		vim.notify("No thought on this line", vim.log.levels.INFO, { title = "thought-flow" })
+		return
+	end
+
+	table.sort(thoughts_here)
+	local node_id = file .. "::" .. thoughts_here[1]
+
+	-- Not passed as `reveal_file`: neo-tree normalizes that as a real
+	-- filesystem path (e.g. collapsing "//" and trailing "/"), which can
+	-- mangle a thought's id if its text contains those characters. Focus
+	-- the node ourselves once the window/tree is ready instead.
+	require("neo-tree.command").execute({ source = "thought-flow", action = "focus" })
+	vim.schedule(function()
+		local manager = require("neo-tree.sources.manager")
+		local renderer = require("neo-tree.ui.renderer")
+		local state = manager.get_state("thought-flow")
+		if state then
+			renderer.focus_node(state, node_id, false)
+		end
+	end)
 end
 
 M.remove_line = function()
@@ -339,6 +373,35 @@ M.remove_line = function()
 	repo.remove_thought(thought_file, thought_line_number)
 	M.annotate_buffer()
 	invalidate_status_cache()
+	refresh_tree()
+end
+
+M.goto_next = function()
+	local repo = require("thought-flow.repo")
+	local nvim = require("thought-flow.nvim")
+	local line = vim.api.nvim_win_get_cursor(0)[1]
+	for _, data in ipairs(repo.get_sorted_for_file(vim.api.nvim_buf_get_name(0))) do
+		if data.line_number > line then
+			nvim.go_to_line(data.line_number)
+			return
+		end
+	end
+	vim.notify("No more thoughts in this file", vim.log.levels.INFO, { title = "thought-flow" })
+end
+
+M.goto_prev = function()
+	local repo = require("thought-flow.repo")
+	local nvim = require("thought-flow.nvim")
+	local line = vim.api.nvim_win_get_cursor(0)[1]
+	local thoughts = repo.get_sorted_for_file(vim.api.nvim_buf_get_name(0))
+	for i = #thoughts, 1, -1 do
+		local data = thoughts[i]
+		if data.line_number < line then
+			nvim.go_to_line(data.line_number)
+			return
+		end
+	end
+	vim.notify("No previous thoughts in this file", vim.log.levels.INFO, { title = "thought-flow" })
 end
 
 M.statistics = function()
