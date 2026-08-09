@@ -245,6 +245,78 @@ M.show_help = function()
 	help_popup:map("n", "<Esc>", close_help, map_opts)
 end
 
+local editor_seq = 0
+
+M.open_thought_editor = function(original_text, thought_data)
+	local repo = require("thought-flow.repo")
+	local nvim = require("thought-flow.nvim")
+
+	local buf = vim.api.nvim_create_buf(false, true)
+	vim.bo[buf].buftype = "acwrite"
+	vim.bo[buf].bufhidden = "wipe"
+	vim.bo[buf].swapfile = false
+	vim.bo[buf].filetype = "markdown"
+	vim.bo[buf].modifiable = true
+
+	local base_name = "thought-flow://" .. thought_data.file .. ":" .. thought_data.line_number
+	if not pcall(vim.api.nvim_buf_set_name, buf, base_name) then
+		editor_seq = editor_seq + 1
+		pcall(vim.api.nvim_buf_set_name, buf, base_name .. "#" .. editor_seq)
+	end
+
+	vim.api.nvim_buf_set_lines(buf, 0, -1, false, vim.split(original_text, "\n", { plain = true }))
+	vim.bo[buf].modified = false
+
+	vim.cmd("botright 6split")
+	vim.api.nvim_win_set_buf(0, buf)
+	vim.wo.winfixheight = true
+
+	vim.keymap.set("n", "q", function()
+		vim.bo[buf].modified = false
+		vim.cmd("close")
+	end, { buffer = buf, nowait = true })
+
+	local current_key = original_text
+	vim.api.nvim_create_autocmd("BufWriteCmd", {
+		buffer = buf,
+		callback = function()
+			local new_lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+			while #new_lines > 1 and new_lines[#new_lines]:match("^%s*$") do
+				table.remove(new_lines)
+			end
+
+			if #new_lines > 1 then
+				vim.notify("Thought must be a single line", vim.log.levels.WARN, { title = "thought-flow" })
+				return
+			end
+
+			local new_text = (new_lines[1] or ""):gsub("^%s+", ""):gsub("%s+$", "")
+			if new_text == "" then
+				vim.notify("Thought cannot be empty", vim.log.levels.WARN, { title = "thought-flow" })
+				return
+			end
+
+			if new_text ~= current_key then
+				if not repo.add(new_text, thought_data) then
+					return
+				end
+				repo.remove(current_key)
+				current_key = new_text
+			end
+
+			vim.bo[buf].modified = false
+
+			local target_bufnr = nvim.find_existing_buffer(thought_data.file)
+			if target_bufnr then
+				M.annotate_buffer(target_bufnr)
+			end
+			invalidate_status_cache()
+			refresh_tree()
+			vim.notify("Thought updated", vim.log.levels.INFO, { title = "thought-flow" })
+		end,
+	})
+end
+
 M.show_thought = function()
 	local repo = require("thought-flow.repo")
 	local file = vim.api.nvim_buf_get_name(0)

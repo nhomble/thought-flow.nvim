@@ -30,6 +30,7 @@ M.open = function(state)
 
 	local nvim = require("thought-flow.nvim")
 	nvim.open_file_at_line(node.extra.thought_flow.file, node.extra.thought_flow.line_number)
+	require("thought-flow").open_thought_editor(node.extra.original_text, node.extra.thought_flow)
 end
 
 M.delete_thought = function(state)
