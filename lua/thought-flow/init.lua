@@ -128,12 +128,16 @@ M.capture = function()
 				return
 			end
 
-			repo.add(value, {
+			local added = repo.add(value, {
 				line_number = thought_line_number,
 				file = thought_file,
 				content = thought_line_content,
 				timestamp = thought_now,
 			})
+			if not added then
+				return
+			end
+
 			M.annotate_buffer()
 			invalidate_status_cache()
 			refresh_tree()

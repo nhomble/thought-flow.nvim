@@ -58,9 +58,15 @@ M.get_all = function()
 	return state
 end
 
+---@return boolean success false if a different thought already uses this text
 M.add = function(thought, data)
+	if state[thought] ~= nil then
+		config.options.notifications.error("A thought with this text already exists: " .. thought)
+		return false
+	end
 	state[thought] = data
 	write()
+	return true
 end
 
 M.remove = function(thought)
