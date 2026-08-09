@@ -40,6 +40,11 @@ M.init = function()
 		bg = "NONE", -- Background color (use 'NONE' for no background)
 		bold = true, -- Make the text bold
 	})
+	vim.api.nvim_set_hl(0, "ThoughtFlowOrphaned", {
+		fg = config.options.orphaned.color,
+		bg = "NONE",
+		bold = true,
+	})
 end
 
 M.annotate = function(bufnr, line_number, count)
