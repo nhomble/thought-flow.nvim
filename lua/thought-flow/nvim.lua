@@ -42,9 +42,13 @@ M.init = function()
 	})
 end
 
-M.annotate = function(bufnr, line_number)
+M.annotate = function(bufnr, line_number, count)
 	local config = require("thought-flow.config")
-	add_virtual_text(M.annotation_namespace, bufnr, line_number, config.options.annotations.text, "InfoSignHL")
+	local text = config.options.annotations.text
+	if count and count > 1 then
+		text = text .. " x" .. count
+	end
+	add_virtual_text(M.annotation_namespace, bufnr, line_number, text, "InfoSignHL")
 end
 
 M.clear_annotations = function(bufnr)

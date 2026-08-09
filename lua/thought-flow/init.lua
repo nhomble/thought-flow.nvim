@@ -100,8 +100,13 @@ M.annotate_buffer = function(bufnr)
 	local thought_file = vim.api.nvim_buf_get_name(bufnr)
 	local file_thoughts = repo.find_thoughts_for_file(thought_file)
 	nvim.clear_annotations(bufnr)
+
+	local counts_by_line = {}
 	for _, value in pairs(file_thoughts) do
-		nvim.annotate(bufnr, value.line_number)
+		counts_by_line[value.line_number] = (counts_by_line[value.line_number] or 0) + 1
+	end
+	for line_number, count in pairs(counts_by_line) do
+		nvim.annotate(bufnr, line_number, count)
 	end
 end
 

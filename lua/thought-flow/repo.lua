@@ -101,12 +101,14 @@ M.get_sorted_for_file = function(file)
 end
 
 M.remove_thought = function(file, line_number)
-	-- remove from table
+	local keys_to_remove = {}
 	for k, data in pairs(state) do
 		if data.file == file and data.line_number == line_number then
-			state[k] = nil
-			break
+			table.insert(keys_to_remove, k)
 		end
+	end
+	for _, k in ipairs(keys_to_remove) do
+		state[k] = nil
 	end
 	write()
 end
