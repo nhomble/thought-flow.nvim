@@ -69,6 +69,9 @@ M.init = function()
 	vim.api.nvim_create_user_command("ThoughtFlowHelp", M.show_help, {
 		desc = "Show thought-flow keymap help",
 	})
+	vim.api.nvim_create_user_command("ThoughtFlowExport", M.export, {
+		desc = "Export all thoughts as markdown to the clipboard",
+	})
 
 	return true
 end
@@ -180,6 +183,10 @@ M.review = function()
 	require("neo-tree.command").execute({ source = "thought-flow", toggle = true })
 end
 
+M.export = function()
+	require("thought-flow.export").to_clipboard()
+end
+
 local help_popup = nil
 
 local function close_help()
@@ -203,6 +210,7 @@ M.show_help = function()
 		{ cmd = "ThoughtFlowShow", desc = "Show thought on this line" },
 		{ cmd = "ThoughtFlowRemoveLine", desc = "Remove thought on this line" },
 		{ cmd = "ThoughtFlowClear", desc = "Clear all thoughts" },
+		{ cmd = "ThoughtFlowExport", desc = "Export all thoughts to clipboard" },
 		{ cmd = "ThoughtFlowHelp", desc = "This help" },
 	}
 
