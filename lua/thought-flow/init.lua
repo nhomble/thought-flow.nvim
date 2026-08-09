@@ -66,6 +66,9 @@ M.init = function()
 	vim.api.nvim_create_user_command("ThoughtFlowShow", M.show_thought, {
 		desc = "Show the thought on the current line",
 	})
+	vim.api.nvim_create_user_command("ThoughtFlowHelp", M.show_help, {
+		desc = "Show thought-flow keymap help",
+	})
 
 	return true
 end
@@ -170,6 +173,76 @@ end
 
 M.review = function()
 	require("neo-tree.command").execute({ source = "thought-flow", toggle = true })
+end
+
+local help_popup = nil
+
+local function close_help()
+	if help_popup then
+		help_popup:unmount()
+		help_popup = nil
+	end
+end
+
+M.show_help = function()
+	if help_popup then
+		close_help()
+		return
+	end
+
+	local entries = {
+		{ cmd = "ThoughtFlowCapture", desc = "Capture a thought at cursor" },
+		{ cmd = "ThoughtFlowReview", desc = "Toggle the thoughts neo-tree" },
+		{ cmd = "ThoughtFlowNext", desc = "Next thought in file" },
+		{ cmd = "ThoughtFlowPrev", desc = "Previous thought in file" },
+		{ cmd = "ThoughtFlowShow", desc = "Show thought on this line" },
+		{ cmd = "ThoughtFlowRemoveLine", desc = "Remove thought on this line" },
+		{ cmd = "ThoughtFlowClear", desc = "Clear all thoughts" },
+		{ cmd = "ThoughtFlowHelp", desc = "This help" },
+	}
+
+	local max_cmd_width = 0
+	for _, e in ipairs(entries) do
+		max_cmd_width = math.max(max_cmd_width, #e.cmd)
+	end
+
+	local lines = { "" }
+	for _, e in ipairs(entries) do
+		local padding = string.rep(" ", max_cmd_width - #e.cmd + 3)
+		table.insert(lines, "  :" .. e.cmd .. padding .. e.desc)
+	end
+	table.insert(lines, "")
+
+	local max_line_width = 0
+	for _, line in ipairs(lines) do
+		max_line_width = math.max(max_line_width, #line)
+	end
+
+	local Popup = require("nui.popup")
+	help_popup = Popup({
+		position = "50%",
+		size = { width = math.max(max_line_width + 2, 30), height = #lines },
+		border = {
+			style = "rounded",
+			text = { top = " Thought Flow Keymaps ", top_align = "center" },
+		},
+		buf_options = {
+			modifiable = false,
+			buftype = "nofile",
+		},
+	})
+
+	help_popup:mount()
+
+	local buf = help_popup.bufnr
+	vim.api.nvim_set_option_value("modifiable", true, { buf = buf })
+	vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+	vim.api.nvim_set_option_value("modifiable", false, { buf = buf })
+
+	local map_opts = { noremap = true, nowait = true }
+	help_popup:map("n", "?", close_help, map_opts)
+	help_popup:map("n", "q", close_help, map_opts)
+	help_popup:map("n", "<Esc>", close_help, map_opts)
 end
 
 M.show_thought = function()
