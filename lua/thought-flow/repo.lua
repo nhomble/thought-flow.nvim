@@ -89,6 +89,17 @@ M.find_thoughts_for_file = function(file)
 	return result
 end
 
+M.get_sorted_for_file = function(file)
+	local result = {}
+	for _, data in pairs(M.find_thoughts_for_file(file)) do
+		table.insert(result, data)
+	end
+	table.sort(result, function(a, b)
+		return a.line_number < b.line_number
+	end)
+	return result
+end
+
 M.remove_thought = function(file, line_number)
 	-- remove from table
 	for k, data in pairs(state) do

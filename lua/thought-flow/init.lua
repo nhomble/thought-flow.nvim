@@ -57,6 +57,12 @@ M.init = function()
 	vim.api.nvim_create_user_command("ThoughtFlowRemoveLine", M.remove_line, {
 		desc = "Remove thought at current cursor line",
 	})
+	vim.api.nvim_create_user_command("ThoughtFlowNext", M.goto_next, {
+		desc = "Go to next thought in current file",
+	})
+	vim.api.nvim_create_user_command("ThoughtFlowPrev", M.goto_prev, {
+		desc = "Go to previous thought in current file",
+	})
 
 	return true
 end
@@ -172,6 +178,34 @@ M.remove_line = function()
 	M.annotate_buffer()
 	invalidate_status_cache()
 	refresh_tree()
+end
+
+M.goto_next = function()
+	local repo = require("thought-flow.repo")
+	local nvim = require("thought-flow.nvim")
+	local line = vim.api.nvim_win_get_cursor(0)[1]
+	for _, data in ipairs(repo.get_sorted_for_file(vim.api.nvim_buf_get_name(0))) do
+		if data.line_number > line then
+			nvim.go_to_line(data.line_number)
+			return
+		end
+	end
+	vim.notify("No more thoughts in this file", vim.log.levels.INFO, { title = "thought-flow" })
+end
+
+M.goto_prev = function()
+	local repo = require("thought-flow.repo")
+	local nvim = require("thought-flow.nvim")
+	local line = vim.api.nvim_win_get_cursor(0)[1]
+	local thoughts = repo.get_sorted_for_file(vim.api.nvim_buf_get_name(0))
+	for i = #thoughts, 1, -1 do
+		local data = thoughts[i]
+		if data.line_number < line then
+			nvim.go_to_line(data.line_number)
+			return
+		end
+	end
+	vim.notify("No previous thoughts in this file", vim.log.levels.INFO, { title = "thought-flow" })
 end
 
 M.statistics = function()
