@@ -102,13 +102,13 @@ function M.to_clipboard()
 	vim.fn.setreg("*", markdown)
 
 	local buf = vim.api.nvim_create_buf(false, true)
-	vim.bo[buf].buftype = "nofile"
-	vim.bo[buf].bufhidden = "wipe"
-	vim.bo[buf].filetype = "markdown"
+	vim.api.nvim_set_option_value("buftype", "nofile", { buf = buf })
+	vim.api.nvim_set_option_value("bufhidden", "wipe", { buf = buf })
+	vim.api.nvim_set_option_value("filetype", "markdown", { buf = buf })
 
 	local body = vim.split(markdown, "\n", { plain = true })
 	vim.api.nvim_buf_set_lines(buf, 0, -1, false, body)
-	vim.bo[buf].modifiable = false
+	vim.api.nvim_set_option_value("modifiable", false, { buf = buf })
 
 	local prev_win = vim.api.nvim_get_current_win()
 	vim.cmd("botright " .. math.min(#body + 1, 15) .. "split")
@@ -121,7 +121,11 @@ function M.to_clipboard()
 		end
 	end, { buffer = buf, nowait = true })
 
-	vim.notify(string.format("Exported %d thought(s) to clipboard", count), vim.log.levels.INFO, { title = "thought-flow" })
+	vim.notify(
+		string.format("Exported %d thought(s) to clipboard", count),
+		vim.log.levels.INFO,
+		{ title = "thought-flow" }
+	)
 end
 
 return M

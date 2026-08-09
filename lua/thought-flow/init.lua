@@ -265,11 +265,11 @@ M.open_thought_editor = function(original_text, thought_data)
 	local nvim = require("thought-flow.nvim")
 
 	local buf = vim.api.nvim_create_buf(false, true)
-	vim.bo[buf].buftype = "acwrite"
-	vim.bo[buf].bufhidden = "wipe"
-	vim.bo[buf].swapfile = false
-	vim.bo[buf].filetype = "markdown"
-	vim.bo[buf].modifiable = true
+	vim.api.nvim_set_option_value("buftype", "acwrite", { buf = buf })
+	vim.api.nvim_set_option_value("bufhidden", "wipe", { buf = buf })
+	vim.api.nvim_set_option_value("swapfile", false, { buf = buf })
+	vim.api.nvim_set_option_value("filetype", "markdown", { buf = buf })
+	vim.api.nvim_set_option_value("modifiable", true, { buf = buf })
 
 	local base_name = "thought-flow://" .. thought_data.file .. ":" .. thought_data.line_number
 	if not pcall(vim.api.nvim_buf_set_name, buf, base_name) then
@@ -278,14 +278,14 @@ M.open_thought_editor = function(original_text, thought_data)
 	end
 
 	vim.api.nvim_buf_set_lines(buf, 0, -1, false, vim.split(original_text, "\n", { plain = true }))
-	vim.bo[buf].modified = false
+	vim.api.nvim_set_option_value("modified", false, { buf = buf })
 
 	vim.cmd("botright 6split")
 	vim.api.nvim_win_set_buf(0, buf)
-	vim.wo.winfixheight = true
+	vim.api.nvim_set_option_value("winfixheight", true, { win = 0 })
 
 	vim.keymap.set("n", "q", function()
-		vim.bo[buf].modified = false
+		vim.api.nvim_set_option_value("modified", false, { buf = buf })
 		vim.cmd("close")
 	end, { buffer = buf, nowait = true })
 
@@ -317,7 +317,7 @@ M.open_thought_editor = function(original_text, thought_data)
 				current_key = new_text
 			end
 
-			vim.bo[buf].modified = false
+			vim.api.nvim_set_option_value("modified", false, { buf = buf })
 
 			local target_bufnr = nvim.find_existing_buffer(thought_data.file)
 			if target_bufnr then
